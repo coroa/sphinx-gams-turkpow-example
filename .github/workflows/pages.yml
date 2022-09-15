@@ -1,0 +1,79 @@
+name: Upload docs to github pages
+
+on:
+  push:
+    branches:    
+      - main
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # Single deploy job since we're just deploying
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: Setup conda environment with mambaforge
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          mamba-version: "*"
+          channels: conda-forge,defaults
+          channel-priority: true
+          activate-environment: sphinx-gams
+          environment-file: environment.yml
+
+      - name: Build HTML documentation with sphinx
+        run: |
+          sphinx-build -b html docs/ docs/_build/html
+
+      # Publish built docs to gh-pages branch.
+      # ===============================
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v2
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: 'docs/_build/html'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1 
+    
+      # ===============================
+
+      # Upload a PDF of the docs
+      # ========================
+
+      # - name: Build PDF documentation with sphinx
+      #   run: |
+      #     apt-get update -y && apt-get install -y latexmk texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
+      #     cd docs/
+      #     make latexpdf
+
+      # # Create an artifact out of the previously built pdf.
+      # - uses: actions/upload-artifact@v1
+      #   with:
+      #     name: Documentation
+      #     path: docs/_build/latex/turkpowexample.pdf
