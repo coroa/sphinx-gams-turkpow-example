@@ -1,0 +1,9 @@
+name: sphinx-gams
+channels:
+  - conda-forge
+dependencies:
+  # doc
+  - sphinx
+  - sphinx_rtd_theme
+  - sphinx-autobuild
+  - sphinxcontrib-bibtex
